@@ -12,6 +12,53 @@ spec:
       labels:
         app: scripthost
     spec:
+      initContainers:
+        - name: caddyfile-init
+          image: caddy:2-alpine
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /etc/caddy
+              cp -f /seed-caddyfile/Caddyfile /etc/caddy/Caddyfile
+          volumeMounts:
+            - name: caddyfile-seed
+              mountPath: /seed-caddyfile
+              readOnly: true
+            - name: caddyfile
+              mountPath: /etc/caddy
+        - name: scripts-init
+          image: caddy:2-alpine
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /srv/scripts
+              if find /seed-scripts -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
+                tar -C /seed-scripts -cf - . | tar -C /srv/scripts -xf -
+              fi
+          volumeMounts:
+            - name: scripts-seed
+              mountPath: /seed-scripts
+              readOnly: true
+            - name: scripts
+              mountPath: /srv/scripts
+        - name: build-init
+          image: caddy:2-alpine
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /srv/build
+              if [ -f /seed-build/build.tgz ]; then
+                tar -xzf /seed-build/build.tgz -C /srv/build
+              fi
+          volumeMounts:
+            - name: build-seed
+              mountPath: /seed-build
+              readOnly: true
+            - name: build
+              mountPath: /srv/build
       containers:
         - name: caddy
           image: caddy:2-alpine
@@ -22,6 +69,7 @@ spec:
             - /etc/caddy/Caddyfile
             - --adapter
             - caddyfile
+            - --watch
           ports:
             - containerPort: 8080
               name: http
@@ -35,26 +83,28 @@ spec:
               port: http
           volumeMounts:
             - name: caddyfile
-              mountPath: /etc/caddy/Caddyfile
-              subPath: Caddyfile
-              readOnly: true
+              mountPath: /etc/caddy
             - name: scripts
               mountPath: /srv/scripts
-              readOnly: true
             - name: build
               mountPath: /srv/build
-              readOnly: true
       volumes:
-        - name: caddyfile
+        - name: caddyfile-seed
           configMap:
             name: scripthost-caddyfile
-        - name: scripts
+        - name: caddyfile
+          emptyDir: {}
+        - name: scripts-seed
           configMap:
             name: scripthost-scripts
             defaultMode: 0555
+        - name: scripts
+          emptyDir: {}
+        - name: build-seed
+          configMap:
+            name: scripthost-build
         - name: build
-          persistentVolumeClaim:
-            claimName: scripthost-build
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

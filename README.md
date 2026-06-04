@@ -15,3 +15,5 @@ Docs:
 - [INSTALL_K8S.md](INSTALL_K8S.md)
 - [ADD_CONTENT.md](ADD_CONTENT.md)
 - [SECURITY.md](SECURITY.md)
+
+Kubernetes script/build updates are applied from generated ConfigMaps and can then either restart the deployment or push content directly into running pod storage.

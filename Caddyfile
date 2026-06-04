@@ -11,6 +11,27 @@ http://:8080 {
     @health path /healthz
     respond @health "ok" 200
 
+    @kpe path /kpe
+    respond @kpe "kpe
+
+scripts:
+  /script/install
+  /script/install_wsl
+  /script/install_local
+
+curl:
+  curl -fsSL 'http://HOST:8080/script/install' | sudo bash
+  curl -fsSL 'http://HOST:8080/script/install_wsl' | sudo bash
+  curl -fsSL 'http://HOST:8080/script/install_local' | bash
+
+build mount:
+  /srv/build
+
+artifact examples:
+  /build/usr/local/bin/k8s-login
+  /build/etc/k8s-login.conf
+" 200
+
     @install path /script/install
     handle @install {
         root * /srv/scripts
@@ -31,5 +52,5 @@ http://:8080 {
         file_server
     }
 
-    respond "scripthost\n\nEndpoints:\n  /healthz\n  /script/install\n  /script/*\n  /build/...\n\nExample:\n  curl -fsSL 'http://HOST:8080/script/install' | sudo bash\n" 200
+    respond "scripthost" 200
 }

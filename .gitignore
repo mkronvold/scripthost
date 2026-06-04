@@ -1,2 +1,7 @@
 scripts/
 build/
+*configmap*.yaml
+configmap.yaml
+build-configmap.yaml
+newk8slogin.sh
+newk8slogin.sh~
