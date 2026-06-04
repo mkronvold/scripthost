@@ -1,0 +1,35 @@
+{
+    admin off
+    auto_https off
+
+    servers {
+        trusted_proxies static private_ranges
+    }
+}
+
+http://:8080 {
+    @health path /healthz
+    respond @health "ok" 200
+
+    @install path /script/install
+    handle @install {
+        root * /srv/scripts
+        rewrite * /install
+        header Content-Type "text/plain; charset=utf-8"
+        templates
+        file_server
+    }
+
+    handle_path /script/* {
+        root * /srv/scripts
+        header Content-Type "text/plain; charset=utf-8"
+        file_server
+    }
+
+    handle_path /build/* {
+        root * /srv/build
+        file_server
+    }
+
+    respond "scripthost\n\nEndpoints:\n  /healthz\n  /script/install\n  /script/*\n  /build/...\n\nExample:\n  curl -fsSL 'http://HOST:8080/script/install' | sudo bash\n" 200
+}

@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scripthost
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scripthost
+  template:
+    metadata:
+      labels:
+        app: scripthost
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2-alpine
+          args:
+            - caddy
+            - run
+            - --config
+            - /etc/caddy/Caddyfile
+            - --adapter
+            - caddyfile
+          ports:
+            - containerPort: 8080
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          volumeMounts:
+            - name: caddyfile
+              mountPath: /etc/caddy/Caddyfile
+              subPath: Caddyfile
+              readOnly: true
+            - name: scripts
+              mountPath: /srv/scripts
+              readOnly: true
+            - name: build
+              mountPath: /srv/build
+              readOnly: true
+      volumes:
+        - name: caddyfile
+          configMap:
+            name: scripthost-caddyfile
+        - name: scripts
+          configMap:
+            name: scripthost-scripts
+            defaultMode: 0555
+        - name: build
+          persistentVolumeClaim:
+            claimName: scripthost-build
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scripthost
+spec:
+  selector:
+    app: scripthost
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
